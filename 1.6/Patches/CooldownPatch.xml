@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Patch>
+    <Operation Class="ConfigurableDynamicCooldown.PatchOp_rangedCoooldownFactorPatch">
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/StatDef[defName = "RangedCooldownFactor"]</xpath>
+                    <value>
+                        <capacityOffsets>
+                            <li>
+                                <capacity>Manipulation</capacity>
+                                <scale>1</scale>
+                            </li>
+                        </capacityOffsets>
+                    </value>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+    
+    <Operation Class="ConfigurableDynamicCooldown.PatchOp_meleeCoooldownFactorPatch">
+        <match Class="PatchOperationSequence">
+            <operations>
+                <li Class="PatchOperationAdd">
+                    <xpath>Defs/StatDef[defName = "MeleeCooldownFactor"]</xpath>
+                    <value>
+                        <capacityOffsets>
+                            <li>
+                                <capacity>Manipulation</capacity>
+                                <scale>1</scale>
+                            </li>
+                        </capacityOffsets>
+                    </value>
+                </li>
+            </operations>
+        </match>
+    </Operation>
+</Patch>

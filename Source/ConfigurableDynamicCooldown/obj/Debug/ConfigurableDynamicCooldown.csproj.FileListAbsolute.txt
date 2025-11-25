@@ -1,0 +1,8 @@
+C:\Users\DanZinagri\Documents\RimWorldModding\DynamicCooldown\DynamicCooldown\obj\Debug\ConfigurableDynamicCooldown.csproj.AssemblyReference.cache
+C:\Users\DanZinagri\Documents\RimWorldModding\DynamicCooldown\DynamicCooldown\obj\Debug\ConfigurableDynamicCooldown.csproj.CoreCompileInputs.cache
+C:\Users\DanZinagri\Documents\RimWorldModding\DynamicCooldown\DynamicCooldown\bin\Debug\ConfigurableDynamicCooldown.dll
+C:\Users\DanZinagri\Documents\RimWorldModding\DynamicCooldown\DynamicCooldown\obj\Debug\ConfigurableDynamicCooldown.dll
+E:\SteamLibrary\steamapps\common\RimWorld\Mods\ConfigurableDynamicCooldown\1.6\Assemblies\ConfigurableDynamicCooldown.dll
+E:\SteamLibrary\steamapps\common\RimWorld\Mods\ConfigurableDynamicCooldown\Source\ConfigurableDynamicCooldown\obj\Debug\ConfigurableDynamicCooldown.csproj.AssemblyReference.cache
+E:\SteamLibrary\steamapps\common\RimWorld\Mods\ConfigurableDynamicCooldown\Source\ConfigurableDynamicCooldown\obj\Debug\ConfigurableDynamicCooldown.csproj.CoreCompileInputs.cache
+E:\SteamLibrary\steamapps\common\RimWorld\Mods\ConfigurableDynamicCooldown\Source\ConfigurableDynamicCooldown\obj\Debug\ConfigurableDynamicCooldown.dll

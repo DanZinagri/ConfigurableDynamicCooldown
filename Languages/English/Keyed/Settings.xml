@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LanguageData>
+    <ConfigurableDynamicCooldownTitle>Configurable Dynamic Cooldown</ConfigurableDynamicCooldownTitle>
+    <ConfigurableDynamicCooldown.RangedCooldownFactor>Enable Ranged Cooldown Patch</ConfigurableDynamicCooldown.RangedCooldownFactor>
+    <ConfigurableDynamicCooldown.RangedCooldownFactor.Desc>If enabled, ranged cooldown is modified by manipulation. (Requires Restart)</ConfigurableDynamicCooldown.RangedCooldownFactor.Desc>
+    <ConfigurableDynamicCooldown.MeleeeCooldownFactor>Enable Melee Cooldown Patc</ConfigurableDynamicCooldown.MeleeeCooldownFactor>
+    <ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc>If enabled, melee cooldown is modified by manipulation. (Requires Restart)</ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc>
+    <ConfigurableDynamicCooldown.Scale>Cooldown Scale</ConfigurableDynamicCooldown.Scale>
+</LanguageData>
