@@ -33,9 +33,10 @@ public class ConfigurableDynamicCooldownMod : Mod
     private void ApplySettings()
     {
         // Ranged
+        var ranged = DefDatabase<StatDef>.GetNamedSilentFail("RangedCooldownFactor");
         if (Settings.RangedCooldownFactor)
         {
-            var ranged = DefDatabase<StatDef>.GetNamedSilentFail("RangedCooldownFactor");
+            
             if (ranged?.capacityOffsets != null)
             {
                 foreach (var off in ranged.capacityOffsets)
@@ -50,11 +51,21 @@ public class ConfigurableDynamicCooldownMod : Mod
                 }
             }
         }
+        if (Settings.DiminishingReturns && Settings.RangedCooldownFactor)
+        {
+            Settings.rangedcooldownCurve = Settings.rebuildCurve(Settings.rangeddiminishingRetained);
+            ranged.postProcessCurve = Settings.rangedcooldownCurve;
+        }
+        else
+        {
+            ranged.postProcessCurve = null;
+        }
 
         // Melee
+        var melee = DefDatabase<StatDef>.GetNamedSilentFail("MeleeCooldownFactor");
         if (Settings.MeleeeCooldownFactor)
         {
-            var melee = DefDatabase<StatDef>.GetNamedSilentFail("MeleeCooldownFactor");
+            
             if (melee?.capacityOffsets != null)
             {
                 foreach (var off in melee.capacityOffsets)
@@ -66,6 +77,15 @@ public class ConfigurableDynamicCooldownMod : Mod
                     }
                 }
             }
+        }
+        if (Settings.DiminishingReturns && Settings.MeleeeCooldownFactor)
+        {
+            Settings.meleecooldownCurve = Settings.rebuildCurve(Settings.meleediminishingRetained);
+            melee.postProcessCurve = Settings.meleecooldownCurve;
+        }
+        else
+        {
+            melee.postProcessCurve = null;
         }
     }
 
@@ -83,6 +103,14 @@ public class ConfigurableDynamicCooldownMod : Mod
         listing.CheckboxLabeled("ConfigurableDynamicCooldown.MeleeeCooldownFactor".Translate(), ref Settings.MeleeeCooldownFactor, "ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc".Translate());
         listing.Label("ConfigurableDynamicCooldown.Scale".Translate() + ": " + Settings.MeleeCooldownFactorRange);
         Settings.MeleeCooldownFactorRange = listing.Slider(Settings.MeleeCooldownFactorRange, 0.000000000001f, 10f);
+
+        listing.GapLine();
+        listing.CheckboxLabeled("ConfigurableDynamicCooldown.DiminishingReturns".Translate(), ref Settings.DiminishingReturns, "ConfigurableDynamicCooldown.DiminishingReturns.Desc".Translate());
+        listing.Label("ConfigurableDynamicCooldown.MeleeDiminishingReturns".Translate() + ": " + (int)(Settings.meleediminishingRetained *100) + "%");
+        Settings.meleediminishingRetained = listing.Slider(Settings.meleediminishingRetained, 0.000000000001f, 1f);
+        listing.Gap();
+        listing.Label("ConfigurableDynamicCooldown.RangedDiminishingReturns".Translate() + ": " + (int)(Settings.rangeddiminishingRetained *100) + "%");
+        Settings.rangeddiminishingRetained = listing.Slider(Settings.rangeddiminishingRetained, 0.000000000001f, 1f);
         listing.End();
     }
 }
@@ -91,8 +119,64 @@ public class ConfigurableDynamicCooldownSettings : ModSettings
 {
     public bool RangedCooldownFactor = true;
     public bool MeleeeCooldownFactor = true;
+    public bool DiminishingReturns = true;
     public float MeleeCooldownFactorRange = 1f;
     public float RangedCoodlownFactorRange = 1f;
+    public float meleediminishingRetained = 0.75f;
+    public float rangeddiminishingRetained = 0.75f;
+
+    public SimpleCurve meleecooldownCurve = new SimpleCurve
+    {
+        new CurvePoint(0f,   0.01f),
+        new CurvePoint(0.5f, 0.5f),
+        new CurvePoint(1f,   1f),
+        new CurvePoint(3f,   2f),
+    };
+
+    public SimpleCurve rangedcooldownCurve = new SimpleCurve
+    {
+        new CurvePoint(0f,   0.01f),
+        new CurvePoint(0.5f, 0.5f),
+        new CurvePoint(1f,   1f),
+        new CurvePoint(3f,   2f),
+    };
+
+    public SimpleCurve rebuildCurve(float s)
+    {
+        //s = 1f - s;
+        s = Mathf.Clamp01(s); 
+        float strength = 1f - s;
+
+        const float floor = 0.02f;   // 1% cooldown floor
+        const float p0 = 0.3f;    // exponent for strong curve
+        const float k = 3f;      // weight falloff; higher = less effect near 1
+
+        float Blend(float x)
+        {
+            if (x <= 0f)
+                return floor;
+
+            float baseVal = x;                   // vanilla
+            float altVal = Mathf.Pow(x, p0);    // strongly curved
+            float w = Mathf.Pow(1f - x, k); // big near 0, small near 1
+            float t = strength * w;        // effective blend factor
+
+            float y = baseVal * (1f - t) + altVal * t;
+            return Mathf.Max(floor, y);          // don’t go below floor
+        }
+
+        SimpleCurve cooldownCurve = new SimpleCurve
+        {
+            new CurvePoint(0f,  Blend(floor)),
+            // sample the power function at a few key points
+            new CurvePoint(0.25f, Blend(0.25f)), // 175% region
+            new CurvePoint(0.5f,  Blend(0.5f)),  // 150% region
+            new CurvePoint(0.75f, Blend(0.75f)), // 125% region
+            new CurvePoint(1f,   1f),
+            new CurvePoint(3f,   2f),
+        };
+        return cooldownCurve;
+    }
 
     public override void ExposeData()
     {
@@ -101,5 +185,23 @@ public class ConfigurableDynamicCooldownSettings : ModSettings
         Scribe_Values.Look(ref MeleeeCooldownFactor, nameof(MeleeeCooldownFactor), true);
         Scribe_Values.Look(ref MeleeCooldownFactorRange, nameof(MeleeCooldownFactorRange), 1f);
         Scribe_Values.Look(ref RangedCoodlownFactorRange, nameof(RangedCoodlownFactorRange), 1f);
+
+        Scribe_Values.Look(ref DiminishingReturns, nameof(DiminishingReturns), true);
+        Scribe_Deep.Look(ref meleecooldownCurve, nameof(meleecooldownCurve), new SimpleCurve
+        {
+            new CurvePoint(0f,   0.01f),
+            new CurvePoint(0.5f, 0.5f),
+            new CurvePoint(1f,   1f),
+            new CurvePoint(3f,   2f),
+        });
+        Scribe_Deep.Look(ref rangedcooldownCurve, nameof(rangedcooldownCurve), new SimpleCurve
+        {
+            new CurvePoint(0f,   0.01f),
+            new CurvePoint(0.5f, 0.5f),
+            new CurvePoint(1f,   1f),
+            new CurvePoint(3f,   2f),
+        });
+        Scribe_Values.Look(ref rangeddiminishingRetained, nameof(rangeddiminishingRetained), 0.75f);
+        Scribe_Values.Look(ref meleediminishingRetained, nameof(meleediminishingRetained), 0.75f);
     }
 }

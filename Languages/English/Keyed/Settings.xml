@@ -6,4 +6,8 @@
     <ConfigurableDynamicCooldown.MeleeeCooldownFactor>Enable Melee Cooldown Patc</ConfigurableDynamicCooldown.MeleeeCooldownFactor>
     <ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc>If enabled, melee cooldown is modified by manipulation. (Requires Restart)</ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc>
     <ConfigurableDynamicCooldown.Scale>Cooldown Scale</ConfigurableDynamicCooldown.Scale>
+    <ConfigurableDynamicCooldown.DiminishingReturns>Diminishing Returns</ConfigurableDynamicCooldown.DiminishingReturns>
+    <ConfigurableDynamicCooldown.MeleeDiminishingReturns>Melee Diminishing Return Rate</ConfigurableDynamicCooldown.MeleeDiminishingReturns>
+    <ConfigurableDynamicCooldown.RangedDiminishingReturns>Ranged Diminishing Return Rate</ConfigurableDynamicCooldown.RangedDiminishingReturns>
+    <ConfigurableDynamicCooldown.DiminishingReturns.Desc>How much we begin to diminsh the further beyond 100% manipulation we get.</ConfigurableDynamicCooldown.DiminishingReturns.Desc>
 </LanguageData>
