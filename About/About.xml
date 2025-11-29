@@ -6,7 +6,7 @@
 		<li>1.6</li>
 	</supportedVersions>
 	<packageId>DanZinagri.ConfigurableDynamicCooldown</packageId>
-    <modVersion>1.0</modVersion>
+    <modVersion>1.1</modVersion>
 	<description>
 	An updated version of the dynamic weapon cooldown mod. This not only fixes it to work with the most recent vanilla expanded framework changes, but also adds in a slider allowing you to make this as strong or weak as needed.
     
