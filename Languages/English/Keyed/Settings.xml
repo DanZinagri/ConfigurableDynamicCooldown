@@ -1,13 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <LanguageData>
     <ConfigurableDynamicCooldownTitle>Configurable Dynamic Cooldown</ConfigurableDynamicCooldownTitle>
-    <ConfigurableDynamicCooldown.RangedCooldownFactor>Enable Ranged Cooldown Patch</ConfigurableDynamicCooldown.RangedCooldownFactor>
+    <ConfigurableDynamicCooldown.RangedCooldownFactor>Ranged Cooldown Patch</ConfigurableDynamicCooldown.RangedCooldownFactor>
     <ConfigurableDynamicCooldown.RangedCooldownFactor.Desc>If enabled, ranged cooldown is modified by manipulation. (Requires Restart)</ConfigurableDynamicCooldown.RangedCooldownFactor.Desc>
-    <ConfigurableDynamicCooldown.MeleeeCooldownFactor>Enable Melee Cooldown Patc</ConfigurableDynamicCooldown.MeleeeCooldownFactor>
+    <ConfigurableDynamicCooldown.MeleeeCooldownFactor>Melee Cooldown Patch</ConfigurableDynamicCooldown.MeleeeCooldownFactor>
     <ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc>If enabled, melee cooldown is modified by manipulation. (Requires Restart)</ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc>
     <ConfigurableDynamicCooldown.Scale>Cooldown Scale</ConfigurableDynamicCooldown.Scale>
     <ConfigurableDynamicCooldown.DiminishingReturns>Diminishing Returns</ConfigurableDynamicCooldown.DiminishingReturns>
     <ConfigurableDynamicCooldown.MeleeDiminishingReturns>Melee Diminishing Return Rate</ConfigurableDynamicCooldown.MeleeDiminishingReturns>
     <ConfigurableDynamicCooldown.RangedDiminishingReturns>Ranged Diminishing Return Rate</ConfigurableDynamicCooldown.RangedDiminishingReturns>
     <ConfigurableDynamicCooldown.DiminishingReturns.Desc>How much we begin to diminsh the further beyond 100% manipulation we get.</ConfigurableDynamicCooldown.DiminishingReturns.Desc>
+    <ConfigurableDynamicCooldown.CurveMode>Curve Mode (how manipulation maps to cooldown):</ConfigurableDynamicCooldown.CurveMode>
+    <ConfigurableDynamicCooldown.CurveMode.Diminishing>Diminishing Returns (default)</ConfigurableDynamicCooldown.CurveMode.Diminishing>
+    <ConfigurableDynamicCooldown.CurveMode.Inverse>Inverse Manipulation (cooldown = 1 / manipulation^strength)</ConfigurableDynamicCooldown.CurveMode.Inverse>
+    <ConfigurableDynamicCooldown.CurveMode.Linear>Linear (no curve)</ConfigurableDynamicCooldown.CurveMode.Linear>
+    <ConfigurableDynamicCooldown.InverseInfo>Cooldown multiplier = Manipulation^(-strength). At strength 1.0: 100% manipulation = 100% cooldown, 200% = 50%, 500% = 20%, 1000% = 10%. Higher strength rewards manipulation more aggressively.</ConfigurableDynamicCooldown.InverseInfo>
+    <ConfigurableDynamicCooldown.RangedInverseStrength>Ranged Inverse Strength</ConfigurableDynamicCooldown.RangedInverseStrength>
+    <ConfigurableDynamicCooldown.MeleeInverseStrength>Melee Inverse Strength</ConfigurableDynamicCooldown.MeleeInverseStrength>
 </LanguageData>
