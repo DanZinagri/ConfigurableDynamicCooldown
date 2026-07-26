@@ -15,10 +15,8 @@ public class ConfigurableDynamicCooldownMod : Mod
 
     public ConfigurableDynamicCooldownMod(ModContentPack content) : base(content)
     {
-        //Harm = new("DanZinagri.ConfigurableDynamicCooldown");
         Settings = GetSettings<ConfigurableDynamicCooldownSettings>();
-
-        LongEventHandler.ExecuteWhenFinished(ApplySettings);
+        Settings.RebuildCaches();
     }
 
     public override string SettingsCategory() => "ConfigurableDynamicCooldownTitle".Translate();
@@ -26,71 +24,10 @@ public class ConfigurableDynamicCooldownMod : Mod
     public override void WriteSettings()
     {
         base.WriteSettings();
-        // Re-apply whenever the player moves the sliders
-        ApplySettings();
-    }
-
-    private void ApplySettings()
-    {
-        ApplyToStat(
-            DefDatabase<StatDef>.GetNamedSilentFail("RangedCooldownFactor"),
-            Settings.RangedCooldownFactor,
-            Settings.RangedCoodlownFactorRange,
-            Settings.rangeddiminishingRetained,
-            Settings.rangedInverseExponent);
-
-        ApplyToStat(
-            DefDatabase<StatDef>.GetNamedSilentFail("MeleeCooldownFactor"),
-            Settings.MeleeeCooldownFactor,
-            Settings.MeleeCooldownFactorRange,
-            Settings.meleediminishingRetained,
-            Settings.meleeInverseExponent);
-    }
-
-    // Configures a single cooldown StatDef.
-    //
-    // The stat value that gets fed into the postProcessCurve is:
-    //     x = baseValue(1) + (Manipulation - 1) * scale
-    // because RimWorld's PawnCapacityOffset.GetOffset returns (min(level,max) - 1) * scale
-    // (i.e. 100% manipulation contributes 0). So by choosing the scale and the curve
-    // together we fully define how manipulation maps to the final cooldown multiplier.
-    private void ApplyToStat(StatDef stat, bool enabled, float range, float retained, float exponent)
-    {
-        if (stat == null)
-            return;
-
-        PawnCapacityOffset manipOffset = stat.capacityOffsets?
-            .FirstOrDefault(o => o.capacity == PawnCapacityDefOf.Manipulation);
-
-        if (!enabled)
-        {
-            // Fully neutralize: 0 offset + no curve => stat stays at its base value of 1.
-            if (manipOffset != null) manipOffset.scale = 0f;
-            stat.postProcessCurve = null;
-            return;
-        }
-
-        switch (Settings.curveMode)
-        {
-            case CooldownCurveMode.Inverse:
-                // scale = 1  =>  x = 1 + (M - 1) = M, so the curve is indexed directly by
-                // manipulation and maps M -> M^(-exponent).
-                if (manipOffset != null) manipOffset.scale = 1f;
-                stat.postProcessCurve = ConfigurableDynamicCooldownSettings.BuildInverseCurve(exponent, stat.minValue);
-                break;
-
-            case CooldownCurveMode.Diminishing:
-                // scale = -range  =>  x = 1 - range*(M - 1); curve applies the diminishing shaping.
-                if (manipOffset != null) manipOffset.scale = range * -1f;
-                stat.postProcessCurve = Settings.rebuildCurve(retained);
-                break;
-
-            default: // CooldownCurveMode.Linear
-                // scale = -range  =>  x = 1 - range*(M - 1) fed straight through, clamped to minValue.
-                if (manipOffset != null) manipOffset.scale = range * -1f;
-                stat.postProcessCurve = null;
-                break;
-        }
+        // Rebuild the cached diminishing curves whenever the player changes the sliders.
+        // The actual per-pawn effect is applied live by StatPart_ManipulationCooldown, which
+        // reads these settings on demand, so there is nothing to push onto the StatDefs here.
+        Settings.RebuildCaches();
     }
 
     // Transient UI buffers for the manual-input text fields (kept out of ModSettings on purpose).
@@ -165,9 +102,6 @@ public class ConfigurableDynamicCooldownMod : Mod
 
     // Draws a labeled slider that snaps to clean increments when dragged, plus a numeric
     // text field beside it for precise manual input.
-    //   roundTo      - increment the slider snaps to while dragging (in real units)
-    //   displayScale - factor between the stored value and what the user sees/types
-    //                  (1 = raw value, 100 = shown/typed as a percentage)
     private void SliderWithField(Listing_Standard listing, string label, ref float value,
         float min, float max, float roundTo, ref string buffer, float displayScale, string suffix)
     {
@@ -218,24 +152,54 @@ public class ConfigurableDynamicCooldownSettings : ModSettings
     public float rangedInverseExponent = 1f;
     public float meleeInverseExponent = 1f;
 
-    // Inverse mode: final cooldown = Manipulation^(-exponent), sampled into a curve.
-    // In this mode ApplyToStat sets the offset scale to 1, so the stat feeds x = M
-    // (manipulation) straight into this curve. Each point is therefore stored at (M, y).
-    //   exponent 1.0  ->  100% manip = 100% cooldown, 200% = 50%, 500% = 20%, 1000% = 10%
-    public static SimpleCurve BuildInverseCurve(float exponent, float minValue)
-    {
-        exponent = Mathf.Clamp(exponent, 0.05f, 5f);
-        const float maxCooldown = 5f; // cap so near-zero manipulation can't blow up to infinity
+    // Cap so a near-incapacitated pawn (manipulation ~0) can't blow the cooldown up to infinity.
+    public const float MaxCooldownMultiplier = 5f;
 
-        float[] manipSamples = { 0f, 0.1f, 0.25f, 0.5f, 0.75f, 1f, 1.25f, 1.5f, 2f, 2.5f, 3f, 4f, 5f, 7f, 10f, 14f, 20f };
-        SimpleCurve curve = new SimpleCurve();
-        foreach (float m in manipSamples)
+    // Cached diminishing-returns curves, rebuilt from the retained% sliders in RebuildCaches().
+    private SimpleCurve rangedDiminishingCurve;
+    private SimpleCurve meleeDiminishingCurve;
+
+    public void RebuildCaches()
+    {
+        rangedDiminishingCurve = rebuildCurve(rangeddiminishingRetained);
+        meleeDiminishingCurve = rebuildCurve(meleediminishingRetained);
+    }
+
+    // The multiplier applied to the cooldown stat for a pawn with the given manipulation level.
+    // Returned as a plain factor so StatPart_ManipulationCooldown can multiply it into the stat,
+    // composing cleanly with every other cooldown modifier instead of reshaping their sum.
+    //   Manipulation is 1.0 at 100%; a factor < 1 means faster (shorter cooldown).
+    public float GetManipulationFactor(bool ranged, float manipulation)
+    {
+        float range = ranged ? RangedCoodlownFactorRange : MeleeCooldownFactorRange;
+
+        switch (curveMode)
         {
-            float y = (m <= 0f) ? maxCooldown : Mathf.Pow(m, -exponent);
-            y = Mathf.Clamp(y, minValue, maxCooldown);
-            curve.Add(new CurvePoint(m, y));
+            case CooldownCurveMode.Inverse:
+            {
+                // cooldown = Manipulation^(-strength). strength 1 => 200% manip = 50%, 1000% = 10%.
+                float exponent = Mathf.Clamp(ranged ? rangedInverseExponent : meleeInverseExponent, 0.05f, 5f);
+                if (manipulation <= 0f)
+                    return MaxCooldownMultiplier;
+                return Mathf.Min(Mathf.Pow(manipulation, -exponent), MaxCooldownMultiplier);
+            }
+
+            case CooldownCurveMode.Diminishing:
+            {
+                // Reproduce the original curve exactly, but as a multiplier: it used
+                // x = 1 - range*(M - 1) fed through the diminishing curve.
+                SimpleCurve curve = ranged ? rangedDiminishingCurve : meleeDiminishingCurve;
+                if (curve == null) { RebuildCaches(); curve = ranged ? rangedDiminishingCurve : meleeDiminishingCurve; }
+                float x = 1f - range * (manipulation - 1f);
+                return Mathf.Min(curve.Evaluate(x), MaxCooldownMultiplier);
+            }
+
+            default: // Linear
+            {
+                float x = 1f - range * (manipulation - 1f);
+                return Mathf.Clamp(x, 0f, MaxCooldownMultiplier);
+            }
         }
-        return curve;
     }
 
     public SimpleCurve rebuildCurve(float s)
@@ -291,8 +255,68 @@ public class ConfigurableDynamicCooldownSettings : ModSettings
         Scribe_Values.Look(ref meleeInverseExponent, nameof(meleeInverseExponent), 1f);
 
         // Migration: pre-mode saves used the DiminishingReturns bool. If an old save had it
-        // turned off (and has no stored curveMode), honor that as the Linear/no-curve mode.
+        // turned off (and has no stored curveMode, so it defaulted to Diminishing), honor that
+        // as the Linear/no-curve mode.
         if (Scribe.mode == LoadSaveMode.LoadingVars && !DiminishingReturns && curveMode == CooldownCurveMode.Diminishing)
             curveMode = CooldownCurveMode.Linear;
+        if (Scribe.mode == LoadSaveMode.LoadingVars)
+            RebuildCaches();
+    }
+}
+
+// Applies the manipulation-based cooldown effect as a multiplicative StatPart instead of a
+// postProcessCurve. Because StatPart.TransformValue multiplies the already-combined stat value,
+// our effect stacks cleanly with other cooldown modifiers (traits, apparel, expertise, genes, etc.)
+// rather than sweeping their contributions through our curve and inverting buffs into nerfs.
+// Added to RangedCooldownFactor / MeleeCooldownFactor via Patches/CooldownPatch.xml.
+public class StatPart_ManipulationCooldown : StatPart
+{
+    // Resolves everything this part needs, bailing safely on any null/abnormal state. StatParts
+    // can be invoked in odd contexts (worldgen, abstract stat requests, DefOfs not yet populated),
+    // so every dereference is guarded and we simply no-op rather than risk throwing.
+    private bool TryGetFactor(StatRequest req, out Pawn pawn, out float manipulation, out float factor)
+    {
+        pawn = null;
+        manipulation = 1f;
+        factor = 1f;
+
+        var settings = ConfigurableDynamicCooldownMod.Settings;
+        if (settings == null || parentStat == null)
+            return false;
+
+        // Only touch the two stats we patch; anything else is left untouched.
+        bool ranged;
+        if (parentStat.defName == "RangedCooldownFactor") ranged = true;
+        else if (parentStat.defName == "MeleeCooldownFactor") ranged = false;
+        else return false;
+
+        if (ranged && !settings.RangedCooldownFactor) return false;
+        if (!ranged && !settings.MeleeeCooldownFactor) return false;
+
+        // Must be a fully-formed pawn with a health tracker and capacities handler.
+        if (!req.HasThing || !(req.Thing is Pawn p)) return false;
+        if (p.health == null || p.health.capacities == null) return false;
+
+        // DefOf fields are null until defs finish loading; guard against very early evaluation.
+        if (PawnCapacityDefOf.Manipulation == null) return false;
+
+        pawn = p;
+        manipulation = p.health.capacities.GetLevel(PawnCapacityDefOf.Manipulation);
+        factor = settings.GetManipulationFactor(ranged, manipulation);
+        return true;
+    }
+
+    public override void TransformValue(StatRequest req, ref float val)
+    {
+        if (TryGetFactor(req, out _, out _, out float factor))
+            val *= factor;
+    }
+
+    public override string ExplanationPart(StatRequest req)
+    {
+        if (!TryGetFactor(req, out _, out float manipulation, out float factor))
+            return null;
+        return "ConfigurableDynamicCooldownTitle".Translate() + " (" + PawnCapacityDefOf.Manipulation.LabelCap
+            + " " + manipulation.ToStringPercent() + "): " + factor.ToStringByStyle(ToStringStyle.PercentZero, ToStringNumberSense.Factor);
     }
 }

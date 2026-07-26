@@ -2,9 +2,9 @@
 <LanguageData>
     <ConfigurableDynamicCooldownTitle>Configurable Dynamic Cooldown</ConfigurableDynamicCooldownTitle>
     <ConfigurableDynamicCooldown.RangedCooldownFactor>Ranged Cooldown Patch</ConfigurableDynamicCooldown.RangedCooldownFactor>
-    <ConfigurableDynamicCooldown.RangedCooldownFactor.Desc>If enabled, ranged cooldown is modified by manipulation. (Requires Restart)</ConfigurableDynamicCooldown.RangedCooldownFactor.Desc>
+    <ConfigurableDynamicCooldown.RangedCooldownFactor.Desc>If enabled, ranged cooldown is modified by manipulation.</ConfigurableDynamicCooldown.RangedCooldownFactor.Desc>
     <ConfigurableDynamicCooldown.MeleeeCooldownFactor>Melee Cooldown Patch</ConfigurableDynamicCooldown.MeleeeCooldownFactor>
-    <ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc>If enabled, melee cooldown is modified by manipulation. (Requires Restart)</ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc>
+    <ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc>If enabled, melee cooldown is modified by manipulation.</ConfigurableDynamicCooldown.MeleeeCooldownFactor.Desc>
     <ConfigurableDynamicCooldown.Scale>Cooldown Scale</ConfigurableDynamicCooldown.Scale>
     <ConfigurableDynamicCooldown.DiminishingReturns>Diminishing Returns</ConfigurableDynamicCooldown.DiminishingReturns>
     <ConfigurableDynamicCooldown.MeleeDiminishingReturns>Melee Diminishing Return Rate</ConfigurableDynamicCooldown.MeleeDiminishingReturns>
