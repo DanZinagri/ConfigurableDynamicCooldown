@@ -284,10 +284,11 @@ public class StatPart_ManipulationCooldown : StatPart
         if (settings == null || parentStat == null)
             return false;
 
-        // Only touch the two stats we patch; anything else is left untouched.
+        // Only touch the two stats we patch; anything else is left untouched. The DefOf
+        // fields are null until defs finish loading, in which case neither matches.
         bool ranged;
-        if (parentStat.defName == "RangedCooldownFactor") ranged = true;
-        else if (parentStat.defName == "MeleeCooldownFactor") ranged = false;
+        if (parentStat == StatDefOf.RangedCooldownFactor) ranged = true;
+        else if (parentStat == StatDefOf.MeleeCooldownFactor) ranged = false;
         else return false;
 
         if (ranged && !settings.RangedCooldownFactor) return false;
